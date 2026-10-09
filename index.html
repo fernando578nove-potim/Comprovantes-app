@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizador de Comprovantes</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <div class="brand-icon">🧾</div>
+        <div>
+          <h1>Comprovantes</h1>
+          <span>Organizador</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-view="dashboard">
+          <span class="nav-icon">📊</span> Dashboard
+        </button>
+        <button class="nav-item" data-view="comprovantes">
+          <span class="nav-icon">📄</span> Comprovantes
+        </button>
+        <button class="nav-item" data-view="bancos">
+          <span class="nav-icon">🏦</span> Bancos
+        </button>
+        <button class="nav-item" data-view="pessoas">
+          <span class="nav-icon">👤</span> Pessoas
+        </button>
+        <button class="nav-item" data-view="pastas">
+          <span class="nav-icon">📁</span> Pastas
+        </button>
+        <button class="nav-item" data-view="monitor">
+          <span class="nav-icon">👁️</span> Monitor
+        </button>
+      </nav>
+
+      <button class="nav-item add-receipt-btn">
+        <span class="nav-icon">➕</span> Novo Comprovante
+      </button>
+
+      <div class="sidebar-footer">
+        <button class="btn btn-ghost btn-sm" id="exportBtn">⬇ Exportar Dados</button>
+        <button class="btn btn-ghost btn-sm" id="importBtn">⬆ Importar Dados</button>
+        <input type="file" id="importFile" accept="application/json" hidden>
+        <button class="btn btn-ghost btn-sm" id="backupPuterBtn">☁️ Backup Puter</button>
+        <label class="storage-indicator" id="storageIndicator">
+          <span class="dot"></span>
+          <span id="storageText">Dados locais</span>
+        </label>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="btn btn-ghost btn-sm mobile-menu" id="mobileMenu">☰</button>
+        <h2 id="viewTitle">Dashboard</h2>
+        <div class="topbar-actions">
+          <button class="btn btn-primary" id="topAddReceipt">➕ Novo Comprovante</button>
+        </div>
+      </header>
+
+      <section class="view active" id="view-dashboard">
+        <div class="dashboard-stats" id="dashboardStats"></div>
+        <div class="dashboard-grid">
+          <div class="card">
+            <div class="card-header">
+              <h3>Fluxo por Mês</h3>
+              <select id="yearSelect" class="select"></select>
+            </div>
+            <canvas id="flowChart"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Por Banco</h3>
+            </div>
+            <div id="bankSummary" class="bank-summary"></div>
+          </div>
+          <div class="card card-wide">
+            <div class="card-header">
+              <h3>Por Banco</h3>
+            </div>
+            <canvas id="donutChart"></canvas>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Por Pessoa</h3>
+            </div>
+            <div id="personSummary" class="person-summary"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Por Pasta</h3>
+            </div>
+            <div id="folderSummary" class="folder-summary"></div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <h3>Últimos Comprovantes</h3>
+            </div>
+            <div id="recentReceipts" class="recent-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-comprovantes">
+        <div class="filters">
+          <input type="text" id="searchInput" class="input" placeholder="🔍 Buscar por nome, banco, descrição...">
+          <select id="filterBank" class="select"><option value="">Todos os bancos</option></select>
+          <select id="filterPerson" class="select"><option value="">Todas as pessoas</option></select>
+          <select id="filterFolder" class="select"><option value="">Todas as pastas</option></select>
+          <select id="filterTransferType" class="select">
+            <option value="">Tipos de transferência</option>
+            <option value="PIX">PIX</option>
+            <option value="TED">TED</option>
+            <option value="DOC">DOC</option>
+            <option value="BOLETO">BOLETO</option>
+            <option value="TEF">TEF</option>
+            <option value="OUTRO">OUTRO</option>
+          </select>
+          <input type="text" id="filterAgencia" class="input" placeholder="🏦 Agência...">
+          <select id="filterDate" class="select">
+            <option value="">Todas as datas</option>
+            <option value="today">Hoje</option>
+            <option value="week">Últimos 7 dias</option>
+            <option value="month">Últimos 30 dias</option>
+            <option value="year">Últimos 12 meses</option>
+          </select>
+          <button class="btn btn-secondary" id="clearFilters">Limpar</button>
+        </div>
+        <div class="receipts-list" id="receiptsList"></div>
+      </section>
+
+      <section class="view" id="view-bancos">
+        <div class="section-head">
+          <h3>Bancos cadastrados</h3>
+          <button class="btn btn-secondary btn-sm" id="addBankBtn">➕ Adicionar Banco</button>
+        </div>
+        <div class="bank-cards" id="bankCards"></div>
+        <div class="section-head">
+          <h3>Movimentações</h3>
+        </div>
+        <div class="receipts-list" id="bankReceiptsList"></div>
+      </section>
+
+      <section class="view" id="view-pessoas">
+        <div class="section-head">
+          <h3>Pessoas / Contatos</h3>
+          <button class="btn btn-secondary btn-sm" id="addPersonBtn">➕ Adicionar Pessoa</button>
+        </div>
+        <div class="person-cards" id="personCards"></div>
+      </section>
+
+      <section class="view" id="view-pastas">
+        <div class="section-head">
+          <h3>Pastas</h3>
+          <button class="btn btn-secondary btn-sm" id="addFolderBtn">➕ Nova Pasta</button>
+        </div>
+        <div id="folderManager" class="folder-manager"></div>
+        <div class="organize-box" id="organizeBox">
+          <div class="organize-info">
+            <div class="organize-title">🧭 Organização automática</div>
+            <div class="organize-sub" id="organizeSub">Separe seus comprovantes em pastas por <b>Tipo de transferência</b> &raquo; <b>Pessoa</b> &raquo; <b>Agência</b>.</div>
+          </div>
+          <button class="btn btn-primary" id="organizeBtn">Organizar em pastas</button>
+        </div>
+        <div class="organize-legend" id="organizeResult"><span id="organizeResultText"></span></div>
+      </section>
+
+      <section class="view" id="view-monitor">
+        <div class="section-head">
+          <h3>👁️ Monitor de Transferências</h3>
+          <button class="btn btn-secondary btn-sm" id="monitorRefresh">🔄 Atualizar</button>
+        </div>
+        <div class="monitor-toolbar">
+          <div class="monitor-filter">
+            <span class="monitor-filter-label">Ficar de olho:</span>
+            <label class="check"><input type="checkbox" id="monSearch"> buscados (🔍)</label>
+            <label class="check"><input type="checkbox" id="monHigh"> alto valor (⚡ R$ 5.000+)</label>
+            <label class="check"><input type="checkbox" id="monWatched"> marcados (👁️)</label>
+          </div>
+          <div class="monitor-filter">
+            <span class="monitor-filter-label">Período:</span>
+            <select id="monPeriod" class="select">
+              <option value="all">Todos</option>
+              <option value="today">Hoje</option>
+              <option value="week">Últimos 7 dias</option>
+              <option value="month">Últimos 30 dias</option>
+            </select>
+          </div>
+        </div>
+        <div class="alert-banner" id="monitorAlert" hidden></div>
+        <div class="monitor-list" id="monitorList"><div class="empty-state">Carregando...</div></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" id="receiptModal">
+      <div class="modal-header">
+        <h3 id="modalTitle">Novo Comprovante</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <form id="receiptForm" class="modal-body">
+        <input type="hidden" id="receiptId">
+        <div class="field">
+          <label>Nome / Pessoa</label>
+          <select id="fPerson" class="select" required></select>
+          <button type="button" class="link-btn" id="quickAddPerson">+ nova pessoa</button>
+        </div>
+        <div class="field">
+          <label>Banco</label>
+          <select id="fBank" class="select" required></select>
+          <button type="button" class="link-btn" id="quickAddBank">+ novo banco</button>
+        </div>
+        <div class="field">
+          <label>Tipo</label>
+          <select id="fType" class="select" required>
+            <option value="enviado">Enviado (saída)</option>
+            <option value="recebido">Recebido (entrada)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Tipo de Transferência</label>
+          <select id="fTransferType" class="select" required>
+            <option value="PIX">PIX</option>
+            <option value="TED">TED</option>
+            <option value="DOC">DOC</option>
+            <option value="BOLETO">BOLETO</option>
+            <option value="TEF">TEF</option>
+            <option value="OUTRO">OUTRO</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Agência (origem)</label>
+            <input type="text" id="fAgencia" class="input" placeholder="Ex: 1234-5">
+          </div>
+          <div class="field">
+            <label>Agência destino</label>
+            <input type="text" id="fAgenciaDest" class="input" placeholder="Ex: 5678-9">
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Valor (R$)</label>
+            <input type="number" id="fAmount" class="input" step="0.01" min="0" required placeholder="0,00">
+          </div>
+          <div class="field">
+            <label>Data</label>
+            <input type="date" id="fDate" class="input" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Banco de destino / origem</label>
+          <input type="text" id="fCounterBank" class="input" placeholder="Ex: Nubank, Itaú...">
+        </div>
+        <div class="field">
+          <label>Pasta</label>
+          <select id="fFolder" class="select">
+            <option value="">(sem pasta)</option>
+          </select>
+          <button type="button" class="link-btn" id="quickAddFolder">+ nova pasta</button>
+        </div>
+        <div class="field">
+          <label>Descrição</label>
+          <input type="text" id="fDesc" class="input" placeholder="Ex: Pagamento aluguel, Pix João...">
+        </div>
+        <div class="field watch-field">
+          <label class="check check-block">
+            <input type="checkbox" id="fWatch"> 👁️ Ficar de olho nesta transferência
+          </label>
+          <input type="text" id="fWatchNote" class="input" placeholder="Motivo / observação (ex: conferir confirmação, boleto em aberto...)" style="margin-top:8px">
+        </div>
+        <div class="field">
+          <label>Comprovante (imagem)</label>
+          <input type="file" id="fImage" class="input" accept="image/*" capture="environment">
+          <div id="imagePreview" class="image-preview" hidden>
+            <img id="previewImg" alt="comprovante">
+            <button type="button" class="link-btn danger" id="removeImage">remover imagem</button>
+          </div>
+          <input type="hidden" id="fImageData">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-danger" id="deleteReceiptBtn" hidden>Excluir</button>
+          <div class="spacer"></div>
+          <button type="button" class="btn btn-ghost" id="cancelBtn">Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="quickModalBackdrop" hidden>
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3 id="quickModalTitle">Adicionar</h3>
+        <button class="modal-close" id="quickModalClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label id="quickLabel">Nome</label>
+          <input type="text" id="quickInput" class="input">
+        </div>
+        <div class="field" id="quickColorField" hidden>
+          <label>Cor</label>
+          <input type="color" id="quickColor" class="input" value="#4f46e5">
+        </div>
+        <div class="modal-footer">
+          <div class="spacer"></div>
+          <button class="btn btn-ghost" id="quickCancel">Cancelar</button>
+          <button class="btn btn-primary" id="quickSave">Adicionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="https://js.puter.com/v2/"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
